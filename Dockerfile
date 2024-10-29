@@ -5,8 +5,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:1 \
     VNC_PORT=5901 \
-    NOVNC_PORT=6080 \
-    VNC_PASSWORD=1234
+    NOVNC_PORT=6080
 
 # 配置 i386 架构并添加 WineHQ 源、安装所需依赖和工具，清理缓存
 RUN dpkg --add-architecture i386 && \
