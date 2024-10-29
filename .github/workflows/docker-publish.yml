@@ -55,5 +55,5 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          secrets: |
-            id=vnc_password,src=./vnc_password.txt
+          secret-files: |
+            "vnc_password=./vnc_password.txt"
