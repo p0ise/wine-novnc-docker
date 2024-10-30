@@ -44,10 +44,6 @@ RUN --mount=type=secret,id=vnc_password \
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir -p /var/log/supervisord
 
-# 配置 Openbox 和 Xvfb
-COPY openbox-autostart.sh /root/.config/openbox/autostart
-RUN chmod +x /root/.config/openbox/autostart
-
 # 暴露端口
 EXPOSE ${VNC_PORT} ${NOVNC_PORT}
 
