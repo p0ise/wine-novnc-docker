@@ -40,12 +40,14 @@ RUN --mount=type=secret,id=vnc_password \
     mkdir -p /root/.vnc && \
     x11vnc -storepasswd $(cat /run/secrets/vnc_password) /root/.vnc/passwd
 
-# 配置 supervisord 和日志目录
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN mkdir -p /var/log/supervisord
+# 创建 supervisor 配置目录和日志目录并复制独立配置文件
+RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisord
+COPY supervisord.conf /etc/supervisor/supervisord.conf
+COPY supervisor/conf.d/* /etc/supervisor/conf.d/
+
 
 # 暴露端口
 EXPOSE ${VNC_PORT} ${NOVNC_PORT}
 
 # 启动 supervisord
-CMD ["sh", "-c", "/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+CMD ["sh", "-c", "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf"]
