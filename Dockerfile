@@ -11,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        software-properties-common wget curl supervisor x11vnc xvfb openbox python3 ca-certificates && \
+        software-properties-common wget curl supervisor x11vnc xvfb fluxbox python3 ca-certificates && \
     . /etc/os-release && CODENAME=${UBUNTU_CODENAME:-${VERSION_CODENAME}} && \
     mkdir -pm755 /etc/apt/keyrings && \
     wget -q -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
@@ -43,10 +43,6 @@ RUN --mount=type=secret,id=vnc_password \
 # 配置 supervisord 和日志目录
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir -p /var/log/supervisord
-
-# 配置 Openbox 和 Xvfb
-COPY openbox-autostart.sh /root/.config/openbox/autostart
-RUN chmod +x /root/.config/openbox/autostart
 
 # 暴露端口
 EXPOSE ${VNC_PORT} ${NOVNC_PORT}
