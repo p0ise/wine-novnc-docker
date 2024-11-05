@@ -26,42 +26,34 @@ docker pull invelop/wine-novnc:latest
 ```bash
 git clone https://github.com/p0ise/wine-novnc-docker.git
 cd wine-novnc-docker
-docker build --secret id=vnc_password,src=./vnc_password.txt -t wine-novnc .
+docker build -t wine-novnc .
 ```
 
-### 运行容器
+### 运行容器并设置 VNC 密码
+
+此镜像支持通过 `VNC_PASSWORD` 环境变量设置自定义 VNC 密码，同时支持自动生成随机密码的逻辑：
+
+- **自定义密码**：如果在启动容器时传入 `VNC_PASSWORD` 环境变量，则该密码将作为 VNC 密码，无论密码文件是否已存在。
+- **自动生成密码**：如果未提供 `VNC_PASSWORD` 且容器没有现有密码文件，启动时将自动生成一个随机密码并显示在控制台。
+- **保留现有密码**：如果容器内已有密码文件且未传入 `VNC_PASSWORD`，则使用现有密码，不会覆盖。
+
+#### 设置自定义密码的示例
 
 ```bash
-docker run -p 6080:6080 -p 5901:5901 --secret id=vnc_password,src=./vnc_password.txt wine-novnc
+docker run -p 6080:6080 -p 5901:5901 -e VNC_PASSWORD=my_custom_password wine-novnc
 ```
 
-这将启动容器并将 noVNC 映射到本地的 `6080` 端口，VNC 映射到 `5901` 端口。
+#### 自动生成密码的示例
+
+如果未设置 `VNC_PASSWORD` 且没有现有密码文件，容器将生成一个随机密码并显示在控制台：
+
+```bash
+docker run -p 6080:6080 -p 5901:5901 wine-novnc
+```
 
 ### 访问 noVNC 界面
 
 打开浏览器，访问 `http://localhost:6080`，在提示框中输入 VNC 密码，即可访问虚拟桌面并运行 Windows 应用。
-
-## 安全设置
-
-为了确保安全，VNC 密码在构建时通过 Docker BuildKit 的秘密挂载方式注入，而不是通过 Dockerfile 的 `ENV` 设置。确保已配置秘密文件 `vnc_password.txt`，其中包含 VNC 密码：
-
-```plaintext
-your_secure_vnc_password
-```
-
-### 使用 BuildKit 和秘密挂载
-
-默认情况下，BuildKit 已经启用。通过以下命令构建镜像并指定秘密文件：
-
-```bash
-docker build --secret id=vnc_password,src=./vnc_password.txt -t wine-novnc .
-```
-
-并在运行容器时使用相同的秘密文件：
-
-```bash
-docker run -p 6080:6080 -p 5901:5901 --secret id=vnc_password,src=./vnc_password.txt wine-novnc
-```
 
 ## 环境变量
 
@@ -81,8 +73,8 @@ docker run -p 6080:6080 -p 5901:5901 --secret id=vnc_password,src=./vnc_password
   - `x11vnc.conf`：配置 x11vnc VNC 服务。
   - `fluxbox.conf`：配置 Fluxbox 窗口管理器。
   - `novnc.conf`：配置 noVNC 服务。
+- `startup.sh`：启动脚本，用于设置 VNC 密码并启动 `supervisord` 管理服务。
 - `download_gecko_and_mono.sh`：下载并配置 Wine 的 Gecko 和 Mono 支持文件，确保 Wine 的完整运行环境。
-- `vnc_password.txt`：包含 VNC 密码的文件，通过 Docker BuildKit 的秘密挂载功能在构建和运行时注入。
 
 ## 自定义应用配置
 
