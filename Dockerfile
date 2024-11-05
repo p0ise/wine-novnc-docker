@@ -30,10 +30,11 @@ RUN chmod +x /root/download_gecko_and_mono.sh && \
     /root/download_gecko_and_mono.sh "$(wine --version | sed -E 's/^wine-//')" && \
     rm -f /root/download_gecko_and_mono.sh
 
-# 安装 noVNC 和 websockify
+# 安装 noVNC 和 websockify，设置 noVNC 的默认页面
 RUN mkdir -p /opt/novnc/utils/websockify && \
     curl -sL https://github.com/novnc/noVNC/archive/v1.5.0.tar.gz | tar xz -C /opt/novnc --strip-components=1 && \
-    curl -sL https://github.com/novnc/websockify/archive/v0.12.0.tar.gz | tar xz -C /opt/novnc/utils/websockify --strip-components=1
+    curl -sL https://github.com/novnc/websockify/archive/v0.12.0.tar.gz | tar xz -C /opt/novnc/utils/websockify --strip-components=1 && \
+    ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
 # 创建 VNC 密码文件，使用 BuildKit 秘密挂载
 RUN --mount=type=secret,id=vnc_password \
