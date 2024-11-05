@@ -11,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        software-properties-common wget curl supervisor x11vnc xvfb openbox python3 ca-certificates && \
+        software-properties-common wget curl supervisor x11vnc xvfb xterm fluxbox python3 ca-certificates && \
     . /etc/os-release && CODENAME=${UBUNTU_CODENAME:-${VERSION_CODENAME}} && \
     mkdir -pm755 /etc/apt/keyrings && \
     wget -q -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
@@ -30,26 +30,29 @@ RUN chmod +x /root/download_gecko_and_mono.sh && \
     /root/download_gecko_and_mono.sh "$(wine --version | sed -E 's/^wine-//')" && \
     rm -f /root/download_gecko_and_mono.sh
 
-# 安装 noVNC 和 websockify
+# 安装 noVNC 和 websockify，设置 noVNC 的默认页面
 RUN mkdir -p /opt/novnc/utils/websockify && \
     curl -sL https://github.com/novnc/noVNC/archive/v1.5.0.tar.gz | tar xz -C /opt/novnc --strip-components=1 && \
-    curl -sL https://github.com/novnc/websockify/archive/v0.12.0.tar.gz | tar xz -C /opt/novnc/utils/websockify --strip-components=1
+    curl -sL https://github.com/novnc/websockify/archive/v0.12.0.tar.gz | tar xz -C /opt/novnc/utils/websockify --strip-components=1 && \
+    ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
-# 创建 VNC 密码文件，使用 BuildKit 秘密挂载
-RUN --mount=type=secret,id=vnc_password \
-    mkdir -p /root/.vnc && \
-    x11vnc -storepasswd $(cat /run/secrets/vnc_password) /root/.vnc/passwd
+# 创建 supervisor 配置目录和日志目录并复制独立配置文件
+RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisord
+COPY supervisord.conf /etc/supervisor/supervisord.conf
+COPY supervisor/conf.d/* /etc/supervisor/conf.d/
 
-# 配置 supervisord 和日志目录
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-RUN mkdir -p /var/log/supervisord
-
-# 配置 Openbox 和 Xvfb
-COPY openbox-autostart.sh /root/.config/openbox/autostart
-RUN chmod +x /root/.config/openbox/autostart
+# 添加启动脚本
+COPY startup.sh /opt/startup.sh
+RUN chmod +x /opt/startup.sh
 
 # 暴露端口
 EXPOSE ${VNC_PORT} ${NOVNC_PORT}
 
-# 启动 supervisord
-CMD ["sh", "-c", "/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+# 创建应用挂载目录并设置权限
+RUN mkdir -p /app && chmod -R 755 /app
+
+# 设置默认工作目录
+WORKDIR /app
+
+# 使用启动脚本启动服务
+ENTRYPOINT ["/opt/startup.sh"]
