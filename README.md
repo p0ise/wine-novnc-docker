@@ -1,6 +1,6 @@
-# Wine noVNC Docker 镜像
+# Wine noVNC Docker 基础镜像
 
-该项目提供了一个 Docker 镜像，用于在浏览器中通过 noVNC 访问虚拟桌面运行 Windows 应用程序。项目集成了 Wine、VNC 和 noVNC，并使用 Supervisor 管理多个服务。
+该项目提供了一个 Docker 基础镜像，用于在浏览器中通过 noVNC 访问虚拟桌面运行 Windows 应用程序。项目集成了 Wine、VNC 和 noVNC，并使用模块化的 Supervisor 管理多个服务。该镜像非常适合作为基础镜像，用户可在其上添加自定义应用程序。
 
 ## 项目特性
 
@@ -8,13 +8,14 @@
 - **noVNC**: 通过 WebSocket 提供浏览器访问 VNC 虚拟桌面。
 - **x11vnc**: 提供 VNC 虚拟桌面服务。
 - **Fluxbox**: 轻量级、开箱即用的窗口管理器。
-- **Supervisor**: 管理和监控多进程服务，配置为模块化的方式以便维护和扩展。
+- **xterm**: 简单、轻量的终端工具，方便用户在桌面环境中使用命令行。
+- **Supervisor**: 管理和监控多进程服务，采用模块化配置，易于扩展和自定义。
 
 ## 快速开始
 
 ### 获取镜像
 
-从 Docker Hub 拉取镜像：
+从 Docker Hub 拉取基础镜像：
 
 ```bash
 docker pull invelop/wine-novnc:latest
@@ -83,14 +84,62 @@ docker run -p 6080:6080 -p 5901:5901 --secret id=vnc_password,src=./vnc_password
 - `download_gecko_and_mono.sh`：下载并配置 Wine 的 Gecko 和 Mono 支持文件，确保 Wine 的完整运行环境。
 - `vnc_password.txt`：包含 VNC 密码的文件，通过 Docker BuildKit 的秘密挂载功能在构建和运行时注入。
 
-## 自定义配置
+## 自定义应用配置
 
-在 `fluxbox.conf` 中可以自定义 Fluxbox 的启动配置，或通过扩展 Fluxbox 的启动脚本加载特定应用程序。例如，可以在 Fluxbox 启动时通过 Wine 运行特定的 Windows 应用：
+该镜像提供 `/app` 目录，便于用户挂载和自定义应用。可以在 `supervisor` 的模块化配置目录 `conf.d/` 中添加应用的配置文件，以便在镜像启动时运行自定义应用。
 
-```plaintext
-# 在 Fluxbox 配置中添加启动命令
-wine /path/to/your/windows-app.exe
+### 示例：基于此基础镜像构建自定义应用
+
+以下示例展示如何在基础镜像上添加自定义的 Windows 应用 `my-windows-app`：
+
+#### 自定义应用的 `Dockerfile`
+
+```Dockerfile
+# 基于 wine-novnc 基础镜像
+FROM wine-novnc
+
+# 复制应用到 /app 目录
+COPY my-windows-app /app/my-windows-app
+
+# 添加应用的 Supervisor 配置文件
+COPY myapp-supervisor.conf /etc/supervisor/conf.d/myapp.conf
+
+# 设置工作目录
+WORKDIR /app
+
+# 继续使用基础镜像的 ENTRYPOINT
+CMD []
 ```
+
+#### `myapp-supervisor.conf` 配置
+
+通过 `supervisor` 启动应用的配置示例：
+
+```ini
+[program:myapp]
+command=wine /app/my-windows-app/myapp.exe
+autostart=true
+autorestart=true
+priority=50
+stdout_logfile=/var/log/supervisord/myapp.log
+stderr_logfile=/var/log/supervisord/myapp_error.log
+```
+
+#### 构建和运行自定义应用镜像
+
+1. **构建镜像**：
+
+   ```bash
+   docker build -t my-custom-app .
+   ```
+
+2. **运行容器**：
+
+   ```bash
+   docker run -p 6080:6080 -p 5901:5901 my-custom-app
+   ```
+
+在浏览器中访问 `http://localhost:6080`，即可看到 `Fluxbox` 桌面环境，并确认 `my-windows-app` 已启动。
 
 ## 日志文件
 
@@ -101,6 +150,7 @@ wine /path/to/your/windows-app.exe
 - `x11vnc.log`：记录 x11vnc 服务的日志，提供 VNC 访问信息。
 - `novnc.log`：记录 noVNC 服务的日志，提供 WebSocket 连接日志。
 - `fluxbox.log`：记录 Fluxbox 窗口管理器的日志。
+- `myapp.log`：记录自定义应用的日志（根据 `myapp-supervisor.conf` 配置文件）。
 
 可以通过检查这些日志文件来诊断和监控各个服务的状态。
 

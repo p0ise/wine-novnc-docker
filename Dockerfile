@@ -49,5 +49,11 @@ COPY supervisor/conf.d/* /etc/supervisor/conf.d/
 # 暴露端口
 EXPOSE ${VNC_PORT} ${NOVNC_PORT}
 
-# 启动 supervisord
-CMD ["sh", "-c", "/usr/bin/supervisord -c /etc/supervisor/supervisord.conf"]
+# 创建应用挂载目录并设置权限
+RUN mkdir -p /app && chmod -R 755 /app
+
+# 设置默认工作目录
+WORKDIR /app
+
+# 默认启动 supervisord，允许用户在子镜像中定制其他启动命令
+ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
