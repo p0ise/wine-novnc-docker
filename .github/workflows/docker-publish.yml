@@ -4,10 +4,10 @@ on:
   schedule:
     - cron: '45 2 * * *'  # 定时触发，GMT 时间 2:45 AM
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
     tags: [ 'v*.*.*' ]  # 以版本号标签发布
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
 
 env:
   REGISTRY: docker.io
@@ -55,5 +55,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          secret-files: |
-            "vnc_password=./vnc_password.txt"
