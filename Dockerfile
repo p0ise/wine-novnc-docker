@@ -36,16 +36,14 @@ RUN mkdir -p /opt/novnc/utils/websockify && \
     curl -sL https://github.com/novnc/websockify/archive/v0.12.0.tar.gz | tar xz -C /opt/novnc/utils/websockify --strip-components=1 && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
-# 创建 VNC 密码文件，使用 BuildKit 秘密挂载
-RUN --mount=type=secret,id=vnc_password \
-    mkdir -p /root/.vnc && \
-    x11vnc -storepasswd $(cat /run/secrets/vnc_password) /root/.vnc/passwd
-
 # 创建 supervisor 配置目录和日志目录并复制独立配置文件
 RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisord
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY supervisor/conf.d/* /etc/supervisor/conf.d/
 
+# 添加启动脚本
+COPY startup.sh /opt/startup.sh
+RUN chmod +x /opt/startup.sh
 
 # 暴露端口
 EXPOSE ${VNC_PORT} ${NOVNC_PORT}
@@ -56,5 +54,5 @@ RUN mkdir -p /app && chmod -R 755 /app
 # 设置默认工作目录
 WORKDIR /app
 
-# 默认启动 supervisord，允许用户在子镜像中定制其他启动命令
-ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+# 使用启动脚本启动服务
+ENTRYPOINT ["/opt/startup.sh"]
