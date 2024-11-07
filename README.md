@@ -26,7 +26,7 @@ docker pull invelop/wine-novnc:latest
 ```bash
 git clone https://github.com/p0ise/wine-novnc-docker.git
 cd wine-novnc-docker
-docker build -t wine-novnc .
+docker build -t invelop/wine-novnc .
 ```
 
 ### 运行容器并设置 VNC 密码
@@ -40,7 +40,7 @@ docker build -t wine-novnc .
 #### 设置自定义密码的示例
 
 ```bash
-docker run -p 6080:6080 -p 5901:5901 -e VNC_PASSWORD=my_custom_password wine-novnc
+docker run -p 6080:6080 -p 5901:5901 -e VNC_PASSWORD=my_custom_password invelop/wine-novnc
 ```
 
 #### 自动生成密码的示例
@@ -48,7 +48,7 @@ docker run -p 6080:6080 -p 5901:5901 -e VNC_PASSWORD=my_custom_password wine-nov
 如果未设置 `VNC_PASSWORD` 且没有现有密码文件，容器将生成一个随机密码并显示在控制台：
 
 ```bash
-docker run -p 6080:6080 -p 5901:5901 wine-novnc
+docker run -p 6080:6080 -p 5901:5901 invelop/wine-novnc
 ```
 
 ### 访问 noVNC 界面
@@ -88,7 +88,7 @@ docker run -p 6080:6080 -p 5901:5901 wine-novnc
 
 ```Dockerfile
 # 基于 wine-novnc 基础镜像
-FROM wine-novnc
+FROM invelop/wine-novnc
 
 # 复制应用到 /app 目录
 COPY my-windows-app /app/my-windows-app
